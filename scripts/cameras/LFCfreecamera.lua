@@ -1,4 +1,3 @@
-require("camerashake")
 require("mathutil")
 
 -- When onupdatefn is set to nil, use dummyfn instead.
@@ -19,11 +18,20 @@ local function normalize(angle)
     return angle
 end
 
-local function RunFnWarning(fnname)
-    assert(type(fnname) == "string", "fnname needs to be a string!")
+local function RunFnWarning(fnname) -- For functions with no use for LFCFreeCamera, have to keep them in case mods use them but we'll give them a warning
+    LFC.modassert(type(fnname) == "string", "fnname needs to be a string!")
 
-    print(LFC.WARNING_PREFIX.."Trying to run a FollowCamera function ["..fnname.."] while LFCFreeCamera is selected!")
-    print("    This function is not present in the LFCFreeCamera class!\n")
+    local info = debug.getinfo(3, "S")
+    if info.source then
+        local workshop_str = string.find(info.source, "workshop%-")
+        if workshop_str ~= nil or (LFC.DEV and string.find(info.source, "LukaS%-s%-Free%-Cam")) then
+            LFC.modprint(LFC.MOD_WARN,
+                "Trying to run a FollowCamera function ["..fnname.." at "..info.source..", line "..info.linedefined.."] while LFCFreeCamera is selected!",
+                "This function is not present in the LFCFreeCamera class!",
+                "This is just a warning!"
+            )
+        end
+    end
 end
 
 local function OnZoomControl(control, digitalvalue)
@@ -38,11 +46,11 @@ local function OnZoomControl(control, digitalvalue)
     end
 end
 
+local speed_i = 3
 local LFCFreeCamera = Class(function(self)
     self.currentpos = Vector3(0, 0, 0)
     self.moving = Vector3(0, 0, 0) -- Direction the camera is supposed to move in
     self.speeds = { 2, 4, 8, 16, 24, 32, 40, 52, 64 } -- Different speeds because it's easier to create a satisfying speed curve that way
-    self.speed_i = 3
     self.sensitivity = 10
 
     self.fov = 80 -- Higher looks better for first person
@@ -52,6 +60,7 @@ local LFCFreeCamera = Class(function(self)
     self.updatelisteners = {  }
 
     self.update_paused = false
+    self.controllable = true
     self.limited = true -- Limits how far the camera can travel vertically
 
     self:SetDefault()
@@ -62,17 +71,12 @@ local LFCFreeCamera = Class(function(self)
     TheInput:AddControlHandler(CONTROL_ZOOM_OUT, function(digitalvalue) OnZoomControl(CONTROL_ZOOM_OUT, digitalvalue) end)
 end)
 
-function LFCFreeCamera:SetDefaultOffset() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:SetDefaultOffset()
     RunFnWarning("SetDefaultOffset()")
 end
 
 function LFCFreeCamera:SetDefault()
-    self.fov = 80
-    self.sensitivity = 10
-    self.speed = 10
-    self.speed_ramp = 5
-
-    self.controllable = true
+    RunFnWarning("SetDefault()")
 end
 
 function LFCFreeCamera:GetRightVec()
@@ -94,27 +98,27 @@ function LFCFreeCamera:GetPitchDownVec()
     return Vector3(cos_pitch * cos_heading, -math.sin(pitch), cos_pitch * sin_heading)
 end
 
-function LFCFreeCamera:SetPaused(val) -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:SetPaused(val)
     RunFnWarning("SetPaused()")
 end
 
-function LFCFreeCamera:SetMinDistance() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:SetMinDistance()
     RunFnWarning("SetMinDistance()")
 end
 
-function LFCFreeCamera:SetMaxDistance() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:SetMaxDistance()
     RunFnWarning("SetMaxDistance()")
 end
 
-function LFCFreeCamera:SetExtraMaxDistance() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:SetExtraMaxDistance()
     RunFnWarning("SetExtraMaxDistance()")
 end
 
-function LFCFreeCamera:SetGains() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:SetGains()
     RunFnWarning("SetGains()")
 end
 
-function LFCFreeCamera:GetGains() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:GetGains()
     RunFnWarning("GetGains()")
 
     return 0, 0, 0
@@ -132,41 +136,41 @@ function LFCFreeCamera:CanControl()
     return self.controllable
 end
 
-function LFCFreeCamera:SetOffset() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:SetOffset()
     RunFnWarning("SetOffset()")
 end
 
-function LFCFreeCamera:PushScreenHOffset() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:PushScreenHOffset()
     RunFnWarning("PushScreenHOffset()")
 end
 
-function LFCFreeCamera:PopScreenHOffset() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:PopScreenHOffset()
     RunFnWarning("PopScreenHOffset()")
 end
 
-function LFCFreeCamera:LockDistance() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:LockDistance()
     RunFnWarning("LockDistance()")
 end
 
-function LFCFreeCamera:GetDistance() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
-    -- RunFnWarning("GetDistance()")
+function LFCFreeCamera:GetDistance()
+    RunFnWarning("GetDistance()")
 
     return 0
 end
 
-function LFCFreeCamera:SetDistance() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:SetDistance()
     RunFnWarning("SetDistance()")
 end
 
-function LFCFreeCamera:Shake() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:Shake()
     RunFnWarning("Shake()")
 end
 
-function LFCFreeCamera:SetTarget() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:SetTarget()
     RunFnWarning("SetTarget()")
 end
 
-function LFCFreeCamera:MaximizeDistance() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:MaximizeDistance()
     RunFnWarning("MaximizeDistance()")
 end
 
@@ -212,41 +216,41 @@ function LFCFreeCamera:GetHeading()
     return self.heading
 end
 
-function LFCFreeCamera:GetHeadingTarget() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:GetHeadingTarget()
     RunFnWarning("GetHeadingTarget()")
 
     return 0
 end
 
-function LFCFreeCamera:SetHeadingTarget() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:SetHeadingTarget()
     RunFnWarning("SetHeadingTarget()")
 end
 
-function LFCFreeCamera:SetContinuousHeadingTarget() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:SetContinuousHeadingTarget()
     RunFnWarning("SetContinuousHeadingTarget()")
 end
 
-function LFCFreeCamera:ContinuousZoomDelta() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:ContinuousZoomDelta()
     RunFnWarning("ContinuousZoomDelta()")
 end
 
-function LFCFreeCamera:ZoomIn() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:ZoomIn()
     RunFnWarning("ZoomIn()")
 end
 
-function LFCFreeCamera:ZoomOut() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:ZoomOut()
     RunFnWarning("ZoomOut()")
 end
 
-function LFCFreeCamera:Snap() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:Snap()
     RunFnWarning("Snap()")
 end
 
-function LFCFreeCamera:CutsceneMode() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:CutsceneMode()
     RunFnWarning("CutsceneMode()")
 end
 
-function LFCFreeCamera:SetCustomLocation() -- No use for FreeCam, keeping in case mods use it expecting FollowCamera.
+function LFCFreeCamera:SetCustomLocation()
     RunFnWarning("SetCustomLocation()")
 end
 
@@ -258,20 +262,24 @@ function LFCFreeCamera:SetMovingDir(x, y, z)
     end
 end
 
-function LFCFreeCamera:SetSpeed(speed)
-    self.speed = math.clamp(speed, self.speeds[1], self.speeds[#self.speeds]) -- Clamped in case someone calls it directly
+function LFCFreeCamera:SetLimited(limited)
+    self.limited = limited
+end
+
+function LFCFreeCamera:SetSensitivity(sensitivity)
+    self.sensitivity = math.max(0, sensitivity)
+end
+
+function LFCFreeCamera:SetFOV(fov)
+    self.fov = math.clamp(fov, 30, 120)
 end
 
 function LFCFreeCamera:SpeedUp()
-    self.speed_i = math.clamp(self.speed_i + 1, 1, #self.speeds)
-    local new_speed = self.speeds[self.speed_i]
-    self:SetSpeed(new_speed)
+    speed_i = math.clamp(speed_i + 1, 1, #self.speeds)
 end
 
 function LFCFreeCamera:SpeedDown()
-    self.speed_i = math.clamp(self.speed_i - 1, 1, #self.speeds)
-    local new_speed = self.speeds[self.speed_i]
-    self:SetSpeed(new_speed)
+    speed_i = math.clamp(speed_i - 1, 1, #self.speeds)
 end
 
 function LFCFreeCamera:Update(dt)
@@ -294,7 +302,7 @@ function LFCFreeCamera:Update(dt)
     pitch_move = pitch_move * self.sensitivity
 
     self.heading = normalize(self.heading - heading_move) -- But why is it to the left tho ;_; Klei please...
-    self.pitch = math.clamp(self.pitch - pitch_move, -89 ,89)
+    self.pitch = math.clamp(self.pitch - pitch_move, -89 , 89)
 
     local heading = self.heading * DEGREES
     local pitch = self.pitch * DEGREES
@@ -310,9 +318,9 @@ function LFCFreeCamera:Update(dt)
         pos_move.y = (-self.moving.z * p_sin + self.moving.y * p_cos) / length
         pos_move.z = (self.moving.x * dir_cos - self.moving.z * p_cos * dir_sin - self.moving.y * p_sin * dir_sin) / length
 
-        self.currentpos = self.currentpos + pos_move * self.speed * dt
+        self.currentpos = self.currentpos + pos_move * self.speeds[speed_i] * dt
         if self.limited then
-            self.currentpos.y = math.clamp(self.currentpos.y, 1.35, 100) -- 1.35 is about the smallest value to keep the camera from clipping into the ground
+            self.currentpos.y = math.clamp(self.currentpos.y, LFC.MIN_CAM_Y, LFC.MAX_CAM_Y)
         end
     end
 
