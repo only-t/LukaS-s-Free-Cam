@@ -35,6 +35,10 @@ local function RunFnWarning(fnname) -- For functions with no use for LFCFreeCame
 end
 
 local function OnZoomControl(control, digitalvalue)
+    if TheCamera ~= LFCFreeCamera then
+        return
+    end
+
     if digitalvalue then
         if control == CONTROL_ZOOM_IN then
             TheCamera:SpeedUp()
