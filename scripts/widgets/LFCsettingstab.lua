@@ -91,9 +91,9 @@ local function fovOptions()
 	return fovs
 end
 
-local FreeCamSettingsTab = Class(Widget, function(self, owner)
+local LFCSettingsTab = Class(Widget, function(self, owner)
     self.owner = owner
-    Widget._ctor(self, "FreeCamSettingsTab")
+    Widget._ctor(self, "LFCSettingsTab")
 
     self.grid = self:AddChild(Grid())
     self.grid:SetPosition(-90, 184, 0)
@@ -139,4 +139,4 @@ local FreeCamSettingsTab = Class(Widget, function(self, owner)
     self.focus_forward = self.grid
 end)
 
-return FreeCamSettingsTab
+return LFCSettingsTab
