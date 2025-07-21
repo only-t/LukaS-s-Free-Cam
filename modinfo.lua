@@ -1,8 +1,8 @@
-name = "LukaS's Free Cam BETA"
+name = "LukaS's Free Cam"
 description = "A CAM!? FOR FREE!?"
 author = "LukaS"
-version = "0.9.0"
-forumthread = "/profile/365042-lukas"
+version = "1.0.0"
+forumthread = "/profile/365042-lukas/"
 icon_atlas = "icon.xml"
 icon = "icon.tex"
 client_only_mod = true

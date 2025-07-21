@@ -18,8 +18,13 @@ local function AddListItemBackground(w)
 	w.bg:MoveToBack()
 end
 
-local function CreateNumericSpinner(labeltext, min, max, tooltip_text)
-	local w = TEMPLATES.LabelNumericSpinner(labeltext, min, max, label_width, spinner_width, spinner_height, space_between, nil, nil, narrow_field_nudge, tooltip_text)
+local function CreateNumericSpinner(labeltext, values, tooltip_text)
+	local spinnerdata = {  }
+	for i = values[1], values[2], values[3] do
+		table.insert(spinnerdata, { text = tostring(i), data = i })
+	end
+
+	local w = TEMPLATES.LabelSpinner(labeltext, spinnerdata, label_width, spinner_width, spinner_height, space_between, nil, nil, narrow_field_nudge, nil, nil, tooltip_text)
 	AddListItemBackground(w)
 	return w.spinner
 end
@@ -42,7 +47,7 @@ local function MakeSpinnerTooltip(root)
 	return spinner_tooltip
 end
 
-local function AddSpinnerTooltip(widget, tooltip, tooltipdivider)
+local function AddSpinnerTooltip(widget, type, tooltip, tooltipdivider)
 	tooltipdivider:Hide()
 
 	local function ongainfocus()
@@ -60,35 +65,12 @@ local function AddSpinnerTooltip(widget, tooltip, tooltipdivider)
 	end
 
 	widget.bg.ongainfocus = ongainfocus
-
-	if widget.spinner then
-		widget.spinner.ongainfocusfn = ongainfocus
-	elseif widget.button then
-		widget.button.ongainfocus = ongainfocus
-	end
-
 	widget.bg.onlosefocus = onlosefocus
 
-	if widget.spinner then
+	if type == LFC.SETTING_TYPES.SPINNER or type == LFC.SETTING_TYPES.NUM_SPINNER then
+		widget.spinner.ongainfocusfn = ongainfocus
 		widget.spinner.onlosefocusfn = onlosefocus
-	elseif widget.button then
-		widget.button.onlosefocus = onlosefocus
 	end
-end
-
-local enableDisableOptions = {
-    { text = STRINGS.UI.OPTIONS.DISABLED, data = false },
-    { text = STRINGS.UI.OPTIONS.ENABLED,  data = true  }
-}
-
-local function fovOptions()
-	local fovs = {  }
-
-	for fov = _G.LFC.MIN_FOV, _G.LFC.MAX_FOV, 5 do
-		table.insert(fovs, { text = tostring(fov), data = fov })
-	end
-	
-	return fovs
 end
 
 local LFCSettingsTab = Class(Widget, function(self, owner)
@@ -98,40 +80,46 @@ local LFCSettingsTab = Class(Widget, function(self, owner)
     self.grid = self:AddChild(Grid())
     self.grid:SetPosition(-90, 184, 0)
 
-    self.sensitivitySpinner = CreateNumericSpinner(LFC.SETTINGS.OPTIONS.SENSITIVITY.NAME, 1, 20, LFC.SETTINGS.OPTIONS.SENSITIVITY.TOOLTIP)
-    self.sensitivitySpinner.OnChanged = function(_, data)
-		self.owner.working[LFC.SETTINGS.OPTIONS.SENSITIVITY.OPTIONS_STR] = data
-		self.owner:UpdateMenu()
-	end
-    self.sensitivitySpinner:Enable()
+	self.left_column = {  }
+	self.right_column = {  }
+	for name, setting in pairs(LFC.MOD_SETTINGS.SETTINGS) do
+		local widget_name = ""
+		if setting.TYPE == LFC.SETTING_TYPES.SPINNER then
+			widget_name = string.lower(setting.ID).."_spinner"
+			self[widget_name] = CreateTextSpinner(setting.NAME, setting.VALUES, setting.TOOLTIP)
+			self[widget_name].OnChanged = function(_, data)
+				self.owner.working[setting.ID] = data
+				self.owner:UpdateMenu()
+			end
+		end
+		
+		if setting.TYPE == LFC.SETTING_TYPES.NUM_SPINNER then
+			widget_name = string.lower(setting.ID).."_spinner"
+			self[widget_name] = CreateNumericSpinner(setting.NAME, setting.VALUES, setting.TOOLTIP)
+			self[widget_name].OnChanged = function(_, data)
+				self.owner.working[setting.ID] = data
+				self.owner:UpdateMenu()
+			end
+		end
 
-    self.limitedSpinner = CreateTextSpinner(LFC.SETTINGS.OPTIONS.LIMITED.NAME, enableDisableOptions, LFC.SETTINGS.OPTIONS.LIMITED.TOOLTIP)
-    self.limitedSpinner.OnChanged = function(_, data)
-		self.owner.working[LFC.SETTINGS.OPTIONS.LIMITED.OPTIONS_STR] = data
-		self.owner:UpdateMenu()
+		if widget_name ~= "" then
+			self[widget_name]:Enable()
+			self[widget_name].type = setting.TYPE
+			self[widget_name].setting_id = setting.ID
+			table.insert(setting.COLUMN == 1 and self.left_column or self.right_column, self[widget_name])
+		else
+			LFC.modprint(LFC.WARN, "Potentially invalid mod setting type detected! Check your environment file!", "Setting name - "..name, "Setting type - "..setting.TYPE)
+		end
 	end
-    self.limitedSpinner:Enable()
-
-    self.fovSpinner = CreateTextSpinner(LFC.SETTINGS.OPTIONS.FOV.NAME, fovOptions(), LFC.SETTINGS.OPTIONS.FOV.TOOLTIP)
-    self.fovSpinner.OnChanged = function(_, data)
-		self.owner.working[LFC.SETTINGS.OPTIONS.FOV.OPTIONS_STR] = data
-		self.owner:UpdateMenu()
-	end
-    self.fovSpinner:Enable()
-
-	self.left_spinners_graphics = {}
-    table.insert(self.left_spinners_graphics, self.sensitivitySpinner)
-    table.insert(self.left_spinners_graphics, self.fovSpinner)
-    table.insert(self.left_spinners_graphics, self.limitedSpinner)
 
 	self.grid:UseNaturalLayout()
-	self.grid:InitSize(2, #self.left_spinners_graphics, 440, 40)
+	self.grid:InitSize(2, #self.left_column, 440, 40)
 
 	local spinner_tooltip = MakeSpinnerTooltip(self)
 	local spinner_tooltip_divider = self:AddChild(Image("images/global_redux.xml", "item_divider.tex"))
 	spinner_tooltip_divider:SetPosition(90, -225)
 
-	for k, v in ipairs(self.left_spinners_graphics) do
+	for k, v in ipairs(self.left_column) do
 		self.grid:AddItem(v.parent, 1, k)
 		AddSpinnerTooltip(v.parent, spinner_tooltip, spinner_tooltip_divider)
 	end

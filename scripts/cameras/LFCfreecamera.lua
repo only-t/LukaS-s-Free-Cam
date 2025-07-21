@@ -35,8 +35,8 @@ local function RunFnWarning(fnname) -- For functions with no use for LFCFreeCame
 end
 
 local function OnZoomControl(control, digitalvalue)
-    if TheCamera ~= LFCFreeCamera then
-        return
+    if TheCamera ~= LFC.LFCFreeCamera then -- Since both cameras exist at the same time
+        return                             -- We ignore this function if LFCFreeCamera is the current camera
     end
 
     if digitalvalue then
@@ -50,11 +50,15 @@ local function OnZoomControl(control, digitalvalue)
     end
 end
 
-local speed_i = 3
+local speed_i = 3 -- Only 1 camera will ever exist so it's ok to use a local variable like that c:
+local function SpeedCurve(i)
+    return 1 + math.pow(i, 1.8)
+end
+
 local LFCFreeCamera = Class(function(self)
     self.currentpos = Vector3(0, 0, 0)
     self.moving = Vector3(0, 0, 0) -- Direction the camera is supposed to move in
-    self.speeds = { 2, 4, 8, 16, 24, 32, 40, 52, 64 } -- Different speeds because it's easier to create a satisfying speed curve that way
+    self.speed = SpeedCurve(speed_i) 
     self.sensitivity = 10
 
     self.fov = 80 -- Higher looks better for first person
@@ -271,26 +275,30 @@ function LFCFreeCamera:SetLimited(limited)
 end
 
 function LFCFreeCamera:SetSensitivity(sensitivity)
-    self.sensitivity = math.max(0, sensitivity)
+    self.sensitivity = math.clamp(sensitivity, LFC.MIN_SENSITIVITY, LFC.MAX_SENSITIVITY)
 end
 
 function LFCFreeCamera:SetFOV(fov)
-    self.fov = math.clamp(fov, 30, 120)
+    self.fov = math.clamp(fov, LFC.MIN_FOV, LFC.MAX_FOV)
 end
 
 function LFCFreeCamera:SpeedUp()
-    speed_i = math.clamp(speed_i + 1, 1, #self.speeds)
+    speed_i = math.min(speed_i + 1, LFC.MAX_SPEED_INDEX)
+    self:SetSpeed(SpeedCurve(speed_i))
 end
 
 function LFCFreeCamera:SpeedDown()
-    speed_i = math.clamp(speed_i - 1, 1, #self.speeds)
+    speed_i = math.max(speed_i - 1, 1)
+    self:SetSpeed(SpeedCurve(speed_i))
+end
+
+function LFCFreeCamera:SetSpeed(spd) -- You can set the speed manually but the next time SpeedUp/Down it will reset to the correct one
+    self.speed = spd
 end
 
 function LFCFreeCamera:Update(dt)
     if ThePlayer then
-        local enabled, ishudblocking = ThePlayer.components.playercontroller:IsEnabled()
-
-        if not enabled or ishudblocking then
+        if ThePlayer.HUD:HasInputFocus() then
             return
         end
     end
@@ -322,7 +330,7 @@ function LFCFreeCamera:Update(dt)
         pos_move.y = (-self.moving.z * p_sin + self.moving.y * p_cos) / length
         pos_move.z = (self.moving.x * dir_cos - self.moving.z * p_cos * dir_sin - self.moving.y * p_sin * dir_sin) / length
 
-        self.currentpos = self.currentpos + pos_move * self.speeds[speed_i] * dt
+        self.currentpos = self.currentpos + pos_move * self.speed * dt
         if self.limited then
             self.currentpos.y = math.clamp(self.currentpos.y, LFC.MIN_CAM_Y, LFC.MAX_CAM_Y)
         end
