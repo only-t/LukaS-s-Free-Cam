@@ -36,15 +36,15 @@ local function CreateTextSpinner(labeltext, spinnerdata, tooltip_text)
 	return w.spinner
 end
 
-local function MakeSpinnerTooltip(root)
-	local spinner_tooltip = root:AddChild(Text(CHATFONT, 25, ""))
-	spinner_tooltip:SetPosition(90, -275)
-	spinner_tooltip:SetHAlign(ANCHOR_LEFT)
-	spinner_tooltip:SetVAlign(ANCHOR_TOP)
-	spinner_tooltip:SetRegionSize(800, 80)
-	spinner_tooltip:EnableWordWrap(true)
+local function MakeTooltip(root)
+	local w = root:AddChild(Text(CHATFONT, 25, ""))
+	w:SetPosition(90, -275)
+	w:SetHAlign(ANCHOR_LEFT)
+	w:SetVAlign(ANCHOR_TOP)
+	w:SetRegionSize(800, 80)
+	w:EnableWordWrap(true)
 
-	return spinner_tooltip
+	return w
 end
 
 local function AddSpinnerTooltip(widget, type, tooltip, tooltipdivider)
@@ -100,6 +100,8 @@ local LFCSettingsTab = Class(Widget, function(self, owner)
 				self.owner.working[setting.ID] = data
 				self.owner:UpdateMenu()
 			end
+			self[widget_name].min = setting.VALUES[1]
+			self[widget_name].step = setting.VALUES[3]
 		end
 
 		if widget_name ~= "" then
@@ -115,13 +117,18 @@ local LFCSettingsTab = Class(Widget, function(self, owner)
 	self.grid:UseNaturalLayout()
 	self.grid:InitSize(2, #self.left_column, 440, 40)
 
-	local spinner_tooltip = MakeSpinnerTooltip(self)
+	local spinner_tooltip = MakeTooltip(self)
 	local spinner_tooltip_divider = self:AddChild(Image("images/global_redux.xml", "item_divider.tex"))
 	spinner_tooltip_divider:SetPosition(90, -225)
 
 	for k, v in ipairs(self.left_column) do
 		self.grid:AddItem(v.parent, 1, k)
-		AddSpinnerTooltip(v.parent, spinner_tooltip, spinner_tooltip_divider)
+		AddSpinnerTooltip(v.parent, v.type, spinner_tooltip, spinner_tooltip_divider)
+	end
+
+	for k, v in ipairs(self.right_column) do
+		self.grid:AddItem(v.parent, 2, k)
+		AddSpinnerTooltip(v.parent, v.type, spinner_tooltip, spinner_tooltip_divider)
 	end
 
     self.focus_forward = self.grid
