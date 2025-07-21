@@ -143,7 +143,7 @@ _G[MOD_CODE].SETTING_TYPES = {
 }
 
 _G[MOD_CODE].MOD_SETTINGS = {
-    FILENAME = "lfc_settings",
+    FILENAME = "LFC_settings",
     TAB_NAME = "LukaS's Free Cam",
     TOOLTIP = "Modify the mods settings",
     SETTINGS = {
@@ -188,4 +188,20 @@ _G[MOD_CODE].UpdateCameraSettings = function()
     _G[MOD_CODE].LFCFreeCamera:SetSensitivity(_G[MOD_CODE].CURRENT_SETTINGS[_G[MOD_CODE].MOD_SETTINGS.SETTINGS.SENSITIVITY.ID])
     _G[MOD_CODE].LFCFreeCamera:SetFOV(_G[MOD_CODE].CURRENT_SETTINGS[_G[MOD_CODE].MOD_SETTINGS.SETTINGS.FOV.ID])
     _G[MOD_CODE].LFCFreeCamera:SetLimited(_G[MOD_CODE].CURRENT_SETTINGS[_G[MOD_CODE].MOD_SETTINGS.SETTINGS.LIMITED.ID])
+end
+
+_G[MOD_CODE].SelectFreeCam = function()
+    _G.TheCamera = _G[MOD_CODE].LFCFreeCamera
+    
+    if _G.ThePlayer then
+        _G.ThePlayer.components.playercontroller:Enable(false)
+    end
+end
+
+_G[MOD_CODE].SelectDSTCam = function()
+    _G.TheCamera = _G.DSTFollowCamera
+
+    if _G.ThePlayer then
+        _G.ThePlayer.components.playercontroller:Enable(true)
+    end
 end
