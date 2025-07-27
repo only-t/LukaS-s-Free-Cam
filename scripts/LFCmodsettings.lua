@@ -9,8 +9,20 @@ _G.LFC.modgetpersistentdata(_G.LFC.MOD_SETTINGS.FILENAME, function(_, data)
         end
 
         _G.LFC.modsetpersistentdata(_G.LFC.MOD_SETTINGS.FILENAME, _G.json.encode(loaded_settings))
-    else -- Otherwise load existing settings, even if some might be missing
+    else -- Otherwise just check for missing data
         loaded_settings = _G.json.decode(data)
+
+        local was_updated = false
+        for _, setting in pairs(_G.LFC.MOD_SETTINGS.SETTINGS) do
+            if loaded_settings[setting.ID] == nil then
+                loaded_settings[setting.ID] = setting.DEFAULT
+                was_updated = true
+            end
+        end
+
+        if was_updated then
+            _G.LFC.modsetpersistentdata(_G.LFC.MOD_SETTINGS.FILENAME, _G.json.encode(loaded_settings))
+        end
     end
 end)
 
@@ -54,7 +66,6 @@ OptionsScreen.Apply = function(self, ...)
         _G.LFC.UpdateCameraSettings()
     end)
     
-
     old_OptionsScreen_Apply(self, ...)
 end
 
@@ -76,6 +87,10 @@ OptionsScreen.InitializeSpinners = function(self, ...)
         if w.type == _G.LFC.SETTING_TYPES.NUM_SPINNER then
             w:SetSelectedIndex(NumSpinnerOptionsIndex(self.working[w.setting_id], w.min, w.step))
         end
+
+        if w.type == _G.LFC.SETTING_TYPES.KEY_SELECT then
+            w:SetText(self.working[w.setting_id] ~= nil and _G.STRINGS.UI.CONTROLSSCREEN.INPUTS[1][self.working[w.setting_id]] or "")
+        end
     end
 
     for _, w in pairs(self.subscreener.sub_screens[_G.LFC.MOD_CODE].right_column) do
@@ -85,6 +100,10 @@ OptionsScreen.InitializeSpinners = function(self, ...)
 
         if w.type == _G.LFC.SETTING_TYPES.NUM_SPINNER then
             w:SetSelectedIndex(NumSpinnerOptionsIndex(self.working[w.setting_id], w.min, w.step))
+        end
+
+        if w.type == _G.LFC.SETTING_TYPES.KEY_SELECT then
+            w:SetText(self.working[w.setting_id] ~= nil and _G.STRINGS.UI.CONTROLSSCREEN.INPUTS[1][self.working[w.setting_id]] or "")
         end
     end
 

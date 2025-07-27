@@ -69,7 +69,7 @@ end
 ---@param data table|str
 ---@param cb function
 ---@return void
-local function modsetpersistentdata(filename, data, cb)
+local function ModSetPersistentData(filename, data, cb)
     if type(data) == "table" then
         data = _G.json.encode(data)
     elseif type(data) ~= "string" then
@@ -92,9 +92,21 @@ end
 ---@param filename string
 ---@param cb function
 ---@return void
-local function modgetpersistentdata(filename, cb)
+local function ModGetPersistentData(filename, cb)
     modassert(type(cb) == "function", "Failed to load persistent data!", "cb needs to be a function!")
     _G.TheSim:GetPersistentString(filename, cb)
+end
+
+---
+--- Retrieves current mod setting using `setting_id`. Will print a message if `setting_id` doesn't exist.
+---@param setting_id string
+---@return table
+local function GetModSetting(setting_id)
+    if _G[MOD_CODE].CURRENT_SETTINGS[setting_id] ~= nil then
+        return _G[MOD_CODE].CURRENT_SETTINGS[setting_id]
+    end
+
+    modprint(_G[MOD_CODE].PRINT, "Trying to get mod setting "..tostring(setting_id).." but it does not seem to exist.")
 end
 
 -- [[ Disable for live builds ]]
@@ -110,8 +122,9 @@ _G[MOD_CODE].ERROR_PREFIX = "["..MOD_CODE.."] "..MOD_NAME.." - ERROR! "
 
 _G[MOD_CODE].modprint = modprint
 _G[MOD_CODE].modassert = modassert
-_G[MOD_CODE].modsetpersistentdata = modsetpersistentdata
-_G[MOD_CODE].modgetpersistentdata = modgetpersistentdata
+_G[MOD_CODE].modsetpersistentdata = ModSetPersistentData
+_G[MOD_CODE].modgetpersistentdata = ModGetPersistentData
+_G[MOD_CODE].GetModSetting = GetModSetting
 
 
 -- [[                                             ]] --
@@ -139,7 +152,9 @@ local enableDisableOptions = {
 
 _G[MOD_CODE].SETTING_TYPES = {
     SPINNER = "spinner",
-    NUM_SPINNER = "num_spinner"
+    NUM_SPINNER = "num_spinner",
+    LIST = "list",
+    KEY_SELECT = "key_select"
 }
 
 _G[MOD_CODE].MOD_SETTINGS = {
@@ -149,7 +164,7 @@ _G[MOD_CODE].MOD_SETTINGS = {
     SETTINGS = {
         SENSITIVITY = {
             ID = "LFC_sensitivity",
-            NAME = "Sensitivity:",
+            SPINNER_TITLE = "Sensitivity:",
             TOOLTIP = "Change the cameras look sensitivity.",
             COLUMN = 1,
             TYPE = _G[MOD_CODE].SETTING_TYPES.NUM_SPINNER,
@@ -158,7 +173,7 @@ _G[MOD_CODE].MOD_SETTINGS = {
         },
         LIMITED = {
             ID = "LFC_limited",
-            NAME = "Limited movement:",
+            SPINNER_TITLE = "Limited movement:",
             TOOLTIP = "Blocks the camera from going too far up or below the ground.",
             COLUMN = 1,
             TYPE = _G[MOD_CODE].SETTING_TYPES.SPINNER,
@@ -167,12 +182,20 @@ _G[MOD_CODE].MOD_SETTINGS = {
         },
         FOV = {
             ID = "LFC_fov",
-            NAME = "FOV:",
+            SPINNER_TITLE = "FOV:",
             TOOLTIP = "Change the cameras field of view.",
             COLUMN = 1,
             TYPE = _G[MOD_CODE].SETTING_TYPES.NUM_SPINNER,
             VALUES = { _G[MOD_CODE].MIN_FOV, _G[MOD_CODE].MAX_FOV, 5 },
             DEFAULT = 80
+        },
+        TOGGLE_KEY = {
+            ID = "LFC_toggle_key",
+            SPINNER_TITLE = "Toggle camera key:",
+            TOOLTIP = "Change the key for toggling Free Cam.",
+            COLUMN = 2,
+            TYPE = _G[MOD_CODE].SETTING_TYPES.KEY_SELECT,
+            DEFAULT = _G.KEY_EQUALS
         }
     }
 }
@@ -185,23 +208,21 @@ _G[MOD_CODE].LFCFreeCamera = nil -- The camera gets created with TheGlobalInstan
 _G[MOD_CODE].UpdateCameraSettings = function()
     _G[MOD_CODE].modassert(_G[MOD_CODE].LFCFreeCamera ~= nil, "Cannot update camera settings!", "LFCFreeCamera is nil!")
 
-    _G[MOD_CODE].LFCFreeCamera:SetSensitivity(_G[MOD_CODE].CURRENT_SETTINGS[_G[MOD_CODE].MOD_SETTINGS.SETTINGS.SENSITIVITY.ID])
-    _G[MOD_CODE].LFCFreeCamera:SetFOV(_G[MOD_CODE].CURRENT_SETTINGS[_G[MOD_CODE].MOD_SETTINGS.SETTINGS.FOV.ID])
-    _G[MOD_CODE].LFCFreeCamera:SetLimited(_G[MOD_CODE].CURRENT_SETTINGS[_G[MOD_CODE].MOD_SETTINGS.SETTINGS.LIMITED.ID])
+    _G[MOD_CODE].LFCFreeCamera:SetSensitivity(_G[MOD_CODE].GetModSetting(_G[MOD_CODE].MOD_SETTINGS.SETTINGS.SENSITIVITY.ID))
+    _G[MOD_CODE].LFCFreeCamera:SetFOV(_G[MOD_CODE].GetModSetting(_G[MOD_CODE].MOD_SETTINGS.SETTINGS.FOV.ID))
+    _G[MOD_CODE].LFCFreeCamera:SetLimited(_G[MOD_CODE].GetModSetting(_G[MOD_CODE].MOD_SETTINGS.SETTINGS.LIMITED.ID))
 end
 
 _G[MOD_CODE].SelectFreeCam = function()
-    _G.TheCamera = _G[MOD_CODE].LFCFreeCamera
-    
-    if _G.ThePlayer then
+    if _G.ThePlayer then -- Only doable in game with an existing player
+        _G.TheCamera = _G[MOD_CODE].LFCFreeCamera
         _G.ThePlayer.components.playercontroller:Enable(false)
     end
 end
 
 _G[MOD_CODE].SelectDSTCam = function()
-    _G.TheCamera = _G.DSTFollowCamera
-
-    if _G.ThePlayer then
+    if _G.ThePlayer then -- Only doable in game with an existing player
+        _G.TheCamera = _G.DSTFollowCamera
         _G.ThePlayer.components.playercontroller:Enable(true)
     end
 end
