@@ -36,7 +36,7 @@ end
 
 local function OnZoomControl(control, digitalvalue)
     if TheCamera ~= LFC.LFCFreeCamera then -- Since both cameras exist at the same time
-        return                             -- We ignore this function if LFCFreeCamera is the current camera
+        return                             -- We ignore this function if LFCFreeCamera is not the current camera
     end
 
     if digitalvalue then
@@ -301,6 +301,8 @@ function LFCFreeCamera:Update(dt)
         if ThePlayer.HUD:HasInputFocus() then
             return
         end
+    else
+        return
     end
 
     local w, h = TheSim:GetWindowSize()

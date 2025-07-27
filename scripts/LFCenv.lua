@@ -203,14 +203,90 @@ _G[MOD_CODE].MOD_SETTINGS = {
 _G[MOD_CODE].CURRENT_SETTINGS = {  }
 
 -- [[ Misc. Variables ]]
+local function normalize(angle)
+    while angle > 360 do
+        angle = angle - 360
+    end
+
+    while angle < 0 do
+        angle = angle + 360
+    end
+
+    return angle
+end
+
 _G[MOD_CODE].LFCFreeCamera = nil -- The camera gets created with TheGlobalInstance
 
 _G[MOD_CODE].UpdateCameraSettings = function()
-    _G[MOD_CODE].modassert(_G[MOD_CODE].LFCFreeCamera ~= nil, "Cannot update camera settings!", "LFCFreeCamera is nil!")
+    modassert(_G[MOD_CODE].LFCFreeCamera ~= nil, "Cannot update camera settings!", "LFCFreeCamera is nil!")
 
     _G[MOD_CODE].LFCFreeCamera:SetSensitivity(_G[MOD_CODE].GetModSetting(_G[MOD_CODE].MOD_SETTINGS.SETTINGS.SENSITIVITY.ID))
     _G[MOD_CODE].LFCFreeCamera:SetFOV(_G[MOD_CODE].GetModSetting(_G[MOD_CODE].MOD_SETTINGS.SETTINGS.FOV.ID))
     _G[MOD_CODE].LFCFreeCamera:SetLimited(_G[MOD_CODE].GetModSetting(_G[MOD_CODE].MOD_SETTINGS.SETTINGS.LIMITED.ID))
+end
+
+local toggle_handler
+_G[MOD_CODE].UpdateCameraToggleKey = function(load)
+    local toggle_key = _G[MOD_CODE].GetModSetting(_G[MOD_CODE].MOD_SETTINGS.SETTINGS.TOGGLE_KEY.ID)
+    if load then -- On load we have a guarantee that no other handler is currently present
+        toggle_handler = _G.TheInput:AddKeyDownHandler(toggle_key, _G[MOD_CODE].ToggleCamera)
+    else
+        modassert(toggle_handler ~= nil, "An error occured when trying to change the toggle camera keybind!",
+        "This could've happened because the mod setting did not load correctly.")
+
+        toggle_handler:Remove()
+        toggle_handler = _G.TheInput:AddKeyDownHandler(toggle_key, _G[MOD_CODE].ToggleCamera)
+    end
+end
+
+_G[MOD_CODE].ToggleCamera = function()
+    if _G.ThePlayer then -- Only doable in game with an existing player
+        if _G.ThePlayer.HUD:HasInputFocus() then
+            return
+        end
+    else
+        return
+    end
+    
+    if _G.TheCamera == _G.DSTFollowCamera then
+        _G[MOD_CODE].TransitionIntoCamera(_G[MOD_CODE].LFCFreeCamera)
+    elseif _G.TheCamera == _G[MOD_CODE].LFCFreeCamera then
+        _G[MOD_CODE].TransitionIntoCamera(_G.DSTFollowCamera)
+    end
+end
+
+_G[MOD_CODE].TransitionIntoCamera = function(cam)
+    if _G.ThePlayer then -- Only doable in game with an existing player
+        if _G.ThePlayer.HUD:HasInputFocus() then
+            return
+        end
+    else
+        return
+    end
+
+    if _G.TheCamera == cam then
+        return
+    end
+
+    if cam == _G[MOD_CODE].LFCFreeCamera then
+        local target_rot = _G.ThePlayer.Transform:GetRotation()
+        local target_pos = _G.ThePlayer:GetPosition()
+        target_pos.y = target_pos.y + 1.5
+        _G[MOD_CODE].LFCFreeCamera.currentpos = target_pos
+        _G[MOD_CODE].LFCFreeCamera.heading = normalize(3 * (target_rot + 180))
+
+        local w, h = _G.TheSim:GetWindowSize()
+        _G.TheInputProxy:SetOSCursorPos(math.floor(w / 2), math.floor(h / 2))
+		_G.TheFrontEnd:Fade(_G.FADE_OUT, _G.SCREEN_FADE_TIME, function() -- FrontEnd:Fade(in_or_out, time_to_take, cb, fade_delay_time, delayovercb, fadeType)
+            _G[MOD_CODE].SelectFreeCam()
+			_G.TheFrontEnd:Fade(_G.FADE_IN, _G.SCREEN_FADE_TIME)
+		end)
+    elseif cam == _G.DSTFollowCamera then
+		_G.TheFrontEnd:Fade(_G.FADE_OUT, _G.SCREEN_FADE_TIME, function()
+            _G[MOD_CODE].SelectDSTCam()
+			_G.TheFrontEnd:Fade(_G.FADE_IN, _G.SCREEN_FADE_TIME)
+		end)
+    end
 end
 
 _G[MOD_CODE].SelectFreeCam = function()

@@ -27,6 +27,7 @@ _G.LFC.modgetpersistentdata(_G.LFC.MOD_SETTINGS.FILENAME, function(_, data)
 end)
 
 _G.LFC.CURRENT_SETTINGS = loaded_settings
+_G.LFC.UpdateCameraToggleKey(true)
 
 -- [[ Add mod settings to the Game Options screen ]]
 local LFCSettingsTab = require("widgets/LFCsettingstab")
@@ -64,6 +65,7 @@ OptionsScreen.Apply = function(self, ...)
     _G.LFC.modsetpersistentdata(_G.LFC.MOD_SETTINGS.FILENAME, loaded_settings, function()
         _G.LFC.CURRENT_SETTINGS = loaded_settings
         _G.LFC.UpdateCameraSettings()
+        _G.LFC.UpdateCameraToggleKey()
     end)
     
     old_OptionsScreen_Apply(self, ...)

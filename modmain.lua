@@ -4,6 +4,8 @@ GLOBAL.setfenv(1, env)
 Assets = {  }
 PrefabFiles = {  }
 
+_G.global("DSTFollowCamera") -- Because of "strict" global rules set up by strict.lua
+
 -- [[ Mod environment ]]
 modimport("scripts/LFCenv")
 
@@ -16,12 +18,12 @@ end
 modimport("scripts/LFCmodsettings")
 
 -- [[ Misc. changes ]]
+
 local old_CreateEntity = _G.CreateEntity
 _G.CreateEntity = function(name, ...)
     local ent = old_CreateEntity(name, ...)
 
     if name == "TheGlobalInstance" then
-        _G.global("DSTFollowCamera") -- Because of "strict" global rules set up by strict.lua
         _G.DSTFollowCamera = _G.TheCamera -- The original camera gets stored so we can switch between them
         _G.LFC.LFCFreeCamera = require("cameras/LFCfreecamera")()
         _G.LFC.UpdateCameraSettings()
