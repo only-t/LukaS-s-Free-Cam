@@ -25,7 +25,7 @@ local function RunFnWarning(fnname) -- For functions with no use for LFCFreeCame
     if info.source then
         local workshop_str = string.find(info.source, "workshop%-")
         if workshop_str ~= nil or (LFC.DEV and string.find(info.source, "LukaS%-s%-Free%-Cam")) then
-            LFC.modprint(LFC.MOD_WARN,
+            LFC.modprint(LFC.WARN,
                 "Trying to run a FollowCamera function ["..fnname.." at "..info.source..", line "..info.linedefined.."] while LFCFreeCamera is selected!",
                 "This function is not present in the LFCFreeCamera class!",
                 "This is just a warning!"
@@ -70,8 +70,6 @@ local LFCFreeCamera = Class(function(self)
     self.update_paused = false
     self.controllable = true
     self.limited = true -- Limits how far the camera can travel vertically
-
-    self:SetDefault()
 
     self.onupdatefn = dummyfn
 
